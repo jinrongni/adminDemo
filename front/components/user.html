@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="../js/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../js/themes/icon.css">
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/jquery.easyui.min.js"></script>
+    <script src="../js/jquery.serializejson.min.js"></script>
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="dlg" class="easyui-dialog" title="Basic Dialog" data-options="iconCls:'icon-save',closed:true" style="width:400px;height:200px;padding:10px">
+        <form id="ff" method="get">
+            <input type="text" name="_id" style="display: none">
+            <table cellpadding="5">
+                <tr>
+                    <td>Name:</td>
+                    <td>
+                        <input class="easyui-textbox" type="text" name="name" data-options="required:true"></input>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Password:</td>
+                    <td>
+                        <input class="easyui-textbox" type="text" name="password" data-options="required:true"></input>
+                    </td>
+                </tr>
+            </table>
+        </form>
+        <div style="text-align:center;padding:5px 0">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitForm()" style="width:80px">Submit</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()" style="width:80px">Clear</a>
+        </div>
+    </div>
+    <table id="dg" >
+
+    </table>
+
+
+
+
+</body>
+<script>
+    function deleteRow(id) {
+        $.messager.confirm("删除确认", "你确认删除吗", function (r) {
+            if (r) {
+                $.ajax({
+                    url: `http://localhost:3000/users/data/${id}`,
+                    type: "delete",
+                }).done(res => {
+                    $("#dg").datagrid('reload');
+                })
+            }
+        })
+
+    };
+
+    function editRow(id) {
+        $.ajax({
+            url: `http://localhost:3000/users/data/${id}`,
+            type: "put",
+        }).done(res => {
+            $('#ff').form('load', res);
+            $("#dlg").dialog('open');
+        })
+    };
+
+    function submitForm() {
+        $('#ff').form('submit', {
+            onSubmit: function () {
+                if ($(this).form('enableValidation').form('validate')) {
+                    var formData = $("#ff").serializeJSON();
+
+                    if (formData._id.trim().length > 0) {
+                        $.ajax({
+                            url: `http://localhost:3000/users/data/${formData._id}`,
+                            type: "put",
+                            data: formData
+                        }).done(res => {
+                            $("#dg").datagrid('reload');
+                            $("#dlg").dialog('close');
+
+                        })
+                    } else {
+                        delete formData._id;
+                        $.ajax({
+                            url: "http://localhost:3000/users/data",
+                            type: "post",
+                            data: formData
+                        }).done(res => {
+                            $("#dg").datagrid('reload');
+                            $("#dlg").dialog('close');
+
+                        })
+                    }
+                } else {
+                    alert("请填写");
+                };
+            }
+        });
+    }
+
+    function clearForm() {
+        $('#ff').form('clear');
+    }
+    var IsCheckFlag = true;
+    $('#dg').datagrid({
+        url: 'http://localhost:3000/users/list',
+        pagination: true,
+       
+        onClickCell: function (rowIndex, field, value) {
+            IsCheckFlag = false;
+        },
+        onSelect: function (rowIndex, rowData) {
+            if (!IsCheckFlag) {
+                IsCheckFlag = true;
+                $("#dg").datagrid("unselectRow", rowIndex);
+            }
+        },
+        onUnselect: function (rowIndex, rowData) {
+            if (!IsCheckFlag) {
+                IsCheckFlag = true;
+                $("#dg").datagrid("selectRow", rowIndex);
+            }
+        },
+        columns: [
+            [{
+                    field: 'ck',
+                    checkbox: true,
+
+                }, {
+                    field: 'name',
+                    title: 'Name',
+                    width: 80
+                },
+                {
+                    field: '_id',
+                    title: '操作',
+                    width: 80,
+                    formatter: function (value, row, index) {
+                        return `<a href='javascript:void(0)' onclick="deleteRow('${value}')">删除</a>&nbsp;<a href='javascript:void(0)' onclick="editRow('${value}')">修改</a>`;
+                    },
+
+                }
+            ]
+        ],
+        toolbar: [{
+            text: '添加新用户',
+            iconCls: 'icon-add',
+            handler: function () {
+                $("#dlg").dialog('open');
+                clearForm();
+            }
+        }, {
+            text: '删除选中行',
+            iconCls: 'icon-remove',
+            handler: function () {
+                $.messager.confirm("删除确认", "你确认删除吗", function (r) {
+                    if (r) {
+                        var rowarry = $('#dg').datagrid('getSelections');
+                        var deldata = [];
+                        for (var i = 0; i < rowarry.length; i++) {
+                            deldata.push(rowarry[i]["_id"])
+                        }
+                        $.ajax({
+                            url: `http://localhost:3000/users/data/${deldata}`,
+                            type: "delete",
+                            traditional: true
+                        }).done(res => {
+                            $("#dg").datagrid('reload');
+                        });
+                    }
+                })
+            }
+        }, {
+            text: `<input class="easyui-searchbox" data-options="prompt:'输入查询的用户名',searcher:doSearch" style="width:100%">`,
+        }],
+
+    });
+
+    function doSearch(value) {
+        $.ajax({
+            url: `http://localhost:3000/users/list`,
+            type: "post",
+            data: {
+                name: value
+            }
+        }).done(res => {
+            $('#dg').datagrid('loadData', res);
+        });
+    }
+</script>
+
+</html>

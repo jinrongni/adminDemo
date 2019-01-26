@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="../js/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../js/themes/icon.css">
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/jquery.easyui.min.js"></script>
+    <script src="../js/jquery.serializejson.min.js"></script>
+    <title>Document</title>
+</head>
+
+<body>
+
+    <ul id="tt">
+        <div id="mm" class="easyui-menu" style="width:120px;">
+            <div class="add" data-options="iconCls:'icon-add'">添加子类</div>
+            <div class="remove" data-options="iconCls:'icon-remove'">移除当前节点</div>
+        </div>
+        <div id="dlg" class="easyui-dialog" title="Basic Dialog" data-options="iconCls:'icon-save',closed:true" style="width:400px;height:200px;padding:10px">
+            <form id="ff" method="get">
+                <input id="pid" type="text" name="parentId" style="display: none">
+                <input id="tp" type="text" name="type" style="display: none">
+                <table cellpadding="5">
+                    <tr>
+                        <td>需要增加子类名称:</td>
+                        <td>
+                            <input class="easyui-textbox" type="text" name="text" data-options="required:true"></input>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+            <div style="text-align:center;padding:5px 0">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitForm()" style="width:80px">Submit</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()" style="width:80px">Clear</a>
+            </div>
+        </div>
+    </ul>
+    <input type="button" value="添加根节点" id="addRoot">
+</body>
+<script>
+    var nodeInfo = null;
+    $('#tt').tree({
+        url: "http://localhost:3000/cate/list",
+        method: "post",
+        onContextMenu: function (e, node) {
+            nodeInfo = node;
+            e.preventDefault();
+            $('#tt').tree('select', node.target);
+            $('#mm').menu('show', {
+                left: e.pageX,
+                top: e.pageY
+            });
+        }
+    });
+
+    $('.add').on("click", function () {
+        $("#tp").val(nodeInfo.type);
+        $("#pid").val(nodeInfo._id);
+        $("#dlg").dialog('open');
+    });
+    $('.remove').on("click", function () {
+        $.messager.confirm("删除确认", "你确认删除吗", function (r) {
+            if (r) {
+                $.ajax({
+                    url: `http://localhost:3000/cate/data/${nodeInfo._id}`,
+                    type: "delete",
+                }).done(res => {
+                   $('#tt').tree('reload');
+                })
+            }
+        })
+
+    })
+
+    function submitForm() {
+        $('#ff').form('submit', {
+            onSubmit: function () {
+                if ($(this).form('enableValidation').form('validate')) {
+                    var formData = $("#ff").serializeJSON();
+                    if (formData.parentId == "") {
+                        delete formData.parentId
+                    }
+                    $.ajax({
+                        url: "http://localhost:3000/cate/data",
+                        type: "post",
+                        data: formData
+                    }).done(res => {
+                        $('#tt').tree('reload');
+                        $("#dlg").dialog('close');
+                        clearForm();
+                    })
+                } else {
+                    alert("请填写");
+                };
+            }
+        });
+    }
+
+    function clearForm() {
+        $('#ff').form('clear');
+    }
+    $("#addRoot").on("click", () => {
+        clearForm();
+        $("#tp").val(1);
+        $("#dlg").dialog('open');
+    })
+</script>
+
+</html>

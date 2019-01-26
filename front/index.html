@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="js/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="js/themes/icon.css">
+    <style>
+        li {
+            list-style: none;
+        }
+    </style>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jquery.easyui.min.js"></script>
+    <script src="js/jquery.serializejson.min.js"></script>
+
+</head>
+
+<body>
+
+
+    <div class="easyui-layout" data-options="fit:true">
+        <div data-options="region:'north'" style="height:50px">
+            <a href="#" id="appendDataRridRow" class="easyui-linkbutton" data-options="iconCls:'icon-add'">Add</a>
+        </div>
+        <div data-options="region:'south',split:true" style="height:50px;"></div>
+        <!--左边-->
+        <div data-options="region:'west',split:true" title="West" style="width:200px;">
+            <div class="easyui-accordion" data-options="fit:true">
+                <div title="功能模块" data-options="iconCls:'icon-ok'" style="overflow:auto;padding:10px;">
+                    <ul class="myMenu">
+                        <li>
+                            <a href="javascript:void(0)" data-link="./components/user.html">用户管理</a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" data-link="./components/cate.html">分类管理</a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" data-link="./components/news.html">新闻管理</a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" data-link="./components/comment.html">评论管理</a>
+                        </li>
+                    </ul>
+                </div>
+                <div title="Help" data-options="iconCls:'icon-help'" style="padding:10px;">
+                    <p>The accordion allows you to provide multiple panels and display one or more at a time. Each panel has
+                        built-in support for expanding and collapsing. Clicking on a panel header to expand or collapse that
+                        panel body. The panel content can be loaded via ajax by specifying a 'href' property. Users can define
+                        a panel to be selected. If it is not specified, then the first panel is taken by default.</p>
+                </div>
+
+            </div>
+        </div>
+        <div data-options="region:'center',title:'Main Title',iconCls:'icon-ok'">
+            <div id="tt" class="easyui-tabs"></div>
+        </div>
+    </div>
+</body>
+<script>
+    $(".myMenu a").click(function () {
+        var title = $(this).text();
+        if ($('#tt').tabs('exists', title)) {
+            $('#tt').tabs('select', title);
+            var url = $(this).attr("data-link");
+            var selTab = $('#tt').tabs('getSelected');
+            $('#tt').tabs('update', {
+                tab: selTab,
+                options: {
+                    content: `<iframe scrolling="auto" frameborder="0" style="width:100%;height:700px" src=${url}></iframe>`
+                }
+            })
+        } else {
+            var url = $(this).attr("data-link");
+            $('#tt').tabs('add', {
+                title: title,
+                content: `<iframe scrolling="auto" frameborder="0" style="width:100%;height:700px" src=${url}></iframe>`,
+                closable: true
+            });
+        }
+    })
+</script>
+
+</html>
